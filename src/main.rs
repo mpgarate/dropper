@@ -8,18 +8,29 @@ use dropper::game::Game;
 
 use std::time::{Duration};
 
+const WINDOW_WIDTH: u32 = 512;
+const WINDOW_HEIGHT: u32 = 512;
+
+const BLOCK_WIDTH: u32 = 64;
+const BLOCK_HEIGHT: u32 = 16;
+
+const GAME_HEIGHT: u32 = WINDOW_HEIGHT / BLOCK_HEIGHT;
+const GAME_WIDTH: u32 = WINDOW_WIDTH / BLOCK_WIDTH;
+
+const FRAME_RATE: u64 = 50; 
+
 fn main() {
     let mut window: PistonWindow = WindowSettings::new(
             "dropper",
-            [600, 600]
+            [WINDOW_WIDTH as u32, WINDOW_HEIGHT as u32]
         )
         .exit_on_esc(true)
         .samples(4)
         .build()
         .unwrap();
 
-    let mut frame_timer = FrameTimer::new(Duration::from_millis(150));
-    let mut game = Game::new();
+    let mut frame_timer = FrameTimer::new(Duration::from_millis(FRAME_RATE));
+    let mut game = Game::new(GAME_HEIGHT, GAME_WIDTH);
 
     while let Some(e) = window.next() {
         if frame_timer.next_frame() {
@@ -31,7 +42,12 @@ fn main() {
             g.clear_stencil(0);
 
             Rectangle::new([1.0, 0.0, 0.0, 1.0]).draw(
-                [game.current_piece_x(), game.current_piece_y(), 100.0, 100.0],
+                [
+                    (game.current_piece_x() * BLOCK_WIDTH) as f64,
+                    (game.current_piece_y() * BLOCK_HEIGHT) as f64,
+                    BLOCK_WIDTH as f64,
+                    BLOCK_HEIGHT as f64,
+                ],
                 &c.draw_state,
                 c.transform,
                 g
