@@ -1,6 +1,6 @@
 use rand::{thread_rng, Rng};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Color {
     Red,
     Yellow,
@@ -85,6 +85,48 @@ impl Game {
         self.pieces.get(row).unwrap().get(col).unwrap().is_some()
     }
 
+    fn remove_cleared_rows(&mut self) {
+        let mut in_sequence = 0;
+
+        for col in 0..4 {
+            let piece = self.pieces.get(self.current_piece.row).unwrap().get(col).unwrap();
+
+            if let Some(ref p) = *piece {
+                if p.color == self.current_piece.color {
+                    in_sequence += 1
+                } else {
+                    in_sequence = 0
+                }
+            }
+        }
+
+        if in_sequence < 4 {
+            return
+        }
+
+        self.pieces.remove(self.current_piece.row);
+        self.pieces.insert(0, vec![None; self.width]);
+
+        self.refresh_piece_rows_and_cols();
+    }
+
+    fn refresh_piece_rows_and_cols(&mut self) {
+        self.pieces = self.pieces.iter().enumerate()
+            .map(|(row_index, col)| {
+                col.iter().enumerate().map(|(col_index, piece)| {
+                    if let Some(ref p) = *piece {
+                        Some(Piece {
+                            row: row_index,
+                            col: col_index,
+                            color: p.color.clone(),
+                        })
+                    } else {
+                        None
+                    }
+                }).collect()
+            }).collect();
+    }
+
     pub fn step(&mut self) {
         if self.is_current_piece_blocked() {
             if let Some(col) = self.pieces.get_mut(self.current_piece.row) {
@@ -93,6 +135,7 @@ impl Game {
                 panic!()
             }
 
+            self.remove_cleared_rows();
             self.current_piece = Piece::new();
         } else {
             self.current_piece.row += 1;
