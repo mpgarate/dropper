@@ -30,28 +30,31 @@ fn main() {
         .unwrap();
 
     let mut frame_timer = FrameTimer::new(Duration::from_millis(FRAME_RATE));
-    let mut game = Game::new(GAME_HEIGHT, GAME_WIDTH);
+    let mut game = Game::new(GAME_HEIGHT as usize, GAME_WIDTH as usize);
 
     while let Some(e) = window.next() {
         if frame_timer.next_frame() {
             game.step();
         }
 
-        window.draw_2d(&e, |c, g| {
-            clear([0.8, 0.8, 0.8, 1.0], g);
-            g.clear_stencil(0);
 
-            Rectangle::new([1.0, 0.0, 0.0, 1.0]).draw(
-                [
-                    (game.current_piece_x() * BLOCK_WIDTH) as f64,
-                    (game.current_piece_y() * BLOCK_HEIGHT) as f64,
-                    BLOCK_WIDTH as f64,
-                    BLOCK_HEIGHT as f64,
-                ],
-                &c.draw_state,
-                c.transform,
-                g
-            );
+        window.draw_2d(&e, |c, g| {
+            for piece in game.get_pieces() {
+                clear([0.8, 0.8, 0.8, 1.0], g);
+                g.clear_stencil(0);
+
+                Rectangle::new([1.0, 0.0, 0.0, 1.0]).draw(
+                    [
+                        (piece.col() as u32 * BLOCK_WIDTH) as f64,
+                        (piece.row() as u32 * BLOCK_HEIGHT) as f64,
+                        BLOCK_WIDTH as f64,
+                        BLOCK_HEIGHT as f64,
+                    ],
+                    &c.draw_state,
+                    c.transform,
+                    g
+                );
+            }
         });
 
         if let Some(Button::Keyboard(Key::Left)) = e.press_args() {
