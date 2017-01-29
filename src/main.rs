@@ -11,8 +11,8 @@ use std::time::{Duration};
 const WINDOW_WIDTH: u32 = 512;
 const WINDOW_HEIGHT: u32 = 512;
 
-const BLOCK_WIDTH: u32 = 64;
-const BLOCK_HEIGHT: u32 = 16;
+const BLOCK_WIDTH: u32 = 128;
+const BLOCK_HEIGHT: u32 = 32;
 
 const GAME_HEIGHT: u32 = WINDOW_HEIGHT / BLOCK_HEIGHT;
 const GAME_WIDTH: u32 = WINDOW_WIDTH / BLOCK_WIDTH;
@@ -36,7 +36,6 @@ fn main() {
         if frame_timer.next_frame() {
             game.step();
         }
-
 
         window.draw_2d(&e, |c, g| {
             for piece in game.get_pieces() {
