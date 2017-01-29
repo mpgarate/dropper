@@ -1,9 +1,33 @@
+use rand::{thread_rng, Rng};
+
 #[derive(Clone, Debug)]
 pub enum Color {
-    RED,
-    YELLOW,
-    BLUE,
-    GREEN,
+    Red,
+    Yellow,
+    Blue,
+    Green,
+}
+
+impl Color {
+    fn rand() -> Color {
+        let mut rng = thread_rng();
+
+        rng.choose(&[
+            Color::Red,
+            Color::Yellow,
+            Color::Blue,
+            Color::Green,
+        ]).unwrap().clone()
+    }
+
+    pub fn as_rgba(&self) -> [f32; 4] {
+        match *self {
+            Color::Red => [0.8, 0.0, 0.0, 1.0],
+            Color::Yellow => [1.0, 1.0, 0.5, 1.0],
+            Color::Blue => [0.0, 0.5, 1.0, 1.0],
+            Color::Green => [0.0, 0.5, 0.0, 1.0],
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -15,8 +39,7 @@ pub struct Piece {
 
 impl Piece {
     pub fn new() -> Piece {
-        // TODO: generate this randomly
-        let color = Color::RED; 
+        let color = Color::rand();
 
          Piece {col: 0, row: 0, color: color}
     }
@@ -27,6 +50,10 @@ impl Piece {
 
     pub fn col(&self) -> usize {
         self.col
+    }
+
+    pub fn color_rgba(&self) -> [f32; 4]{
+        self.color.as_rgba()
     }
 }
 

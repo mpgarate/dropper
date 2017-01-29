@@ -43,7 +43,7 @@ fn main() {
                 clear([0.8, 0.8, 0.8, 1.0], g);
                 g.clear_stencil(0);
 
-                Rectangle::new([1.0, 0.0, 0.0, 1.0]).draw(
+                Rectangle::new(piece.color_rgba()).draw(
                     [
                         (piece.col() as u32 * BLOCK_WIDTH) as f64,
                         (piece.row() as u32 * BLOCK_HEIGHT) as f64,
