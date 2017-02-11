@@ -1,4 +1,5 @@
 use rand::{thread_rng, Rng};
+use std::cmp;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Color {
@@ -82,36 +83,97 @@ impl Game {
             return true
         }
 
-        self.pieces.get(row).unwrap().get(col).unwrap().is_some()
+        println!("in is_current_piece_blocked");
+        self.pieces.get(row).and_then(|columns| columns.get(col)).unwrap_or(&None).is_some()
     }
 
-    fn remove_cleared_rows(&mut self) {
-        let mut in_sequence = 0;
+    fn matches_color(&self, row: isize, col: isize) -> bool {
+        let piece: Option<Piece> = self.pieces.get(row as usize).and_then(|columns| {
+            println!("in matches_color");
+            columns.get(col as usize).unwrap_or(&None).clone()
+        });
 
-        for col in 0..4 {
-            let piece = self.pieces.get(self.current_piece.row).unwrap().get(col).unwrap();
+        match piece {
+            Some(ref p) => {
+                self.current_piece.color == p.color
+            }
+            _ => false,
+        }
+    }
 
-            if let Some(ref p) = *piece {
-                if p.color == self.current_piece.color {
-                    in_sequence += 1
-                } else {
-                    in_sequence = 0
+    fn remove_cleared_pieces(&mut self) {
+        let row = self.current_piece.row as isize;
+        let col = self.current_piece.col as isize;
+
+        let clear_cases = [
+            // vertical
+            vec![
+                (row, col),
+                (row + 1, col),
+                (row + 2, col),
+                (row + 3, col),
+            ],
+            // horizontal
+            vec![
+                (row, col - 3),
+                (row, col - 2),
+                (row, col - 1),
+                (row, col),
+                (row, col + 1),
+                (row, col + 2),
+                (row, col + 3),
+            ],
+            // upward diagonal
+            vec![
+                (row - 3, col - 3),
+                (row - 2, col - 2),
+                (row - 1, col - 1),
+                (row, col),
+                (row + 1, col + 1),
+                (row + 2, col + 2),
+                (row + 3, col + 3),
+            ],
+            // downward diagonal
+            vec![
+                (row + 3, col - 3),
+                (row + 2, col - 2),
+                (row + 1, col - 1),
+                (row, col),
+                (row - 1, col + 1),
+                (row - 2, col + 2),
+                (row - 3, col + 3),
+            ],
+        ];
+
+
+        for case in clear_cases.iter() {
+            let sequence: Vec<_> = case.iter()
+                .skip_while(|&&(row, col)| !self.matches_color(row, col))
+                .take_while(|&&(row, col)| self.matches_color(row, col))
+                .collect();
+
+            if sequence.len() >= 4 {
+                println!("got a seq");
+                for &(row, col) in sequence {
+                    println!("GOT HERE 2");
+                    let mut row = self.pieces.get_mut(row as usize).unwrap();
+                    row.push(None);
+                    row.swap_remove(col as usize);
                 }
+
+                self.refresh_piece_rows_and_cols();
+            } else {
+                println!("too short {:?}", sequence.len());
             }
         }
-
-        if in_sequence < 4 {
-            return
-        }
-
-        self.pieces.remove(self.current_piece.row);
-        self.pieces.insert(0, vec![None; self.width]);
-
-        self.refresh_piece_rows_and_cols();
     }
 
     fn refresh_piece_rows_and_cols(&mut self) {
-        self.pieces = self.pieces.iter().enumerate()
+        self.pieces = self.pieces.iter()
+            .filter(|col| {
+                col.iter().all(|piece| piece.is_some())
+            })
+            .enumerate()
             .map(|(row_index, col)| {
                 col.iter().enumerate().map(|(col_index, piece)| {
                     if let Some(ref p) = *piece {
@@ -132,10 +194,11 @@ impl Game {
             if let Some(col) = self.pieces.get_mut(self.current_piece.row) {
                 col[self.current_piece.col] = Some(self.current_piece.clone());
             } else {
+                println!("step");
                 panic!()
             }
 
-            self.remove_cleared_rows();
+            self.remove_cleared_pieces();
             self.current_piece = Piece::new();
         } else {
             self.current_piece.row += 1;
@@ -143,12 +206,14 @@ impl Game {
     }
 
     pub fn move_left(&mut self) {
+        // TODO: make sure we don't run into existing blocks
         if self.current_piece.col > 0 {
             self.current_piece.col -= 1;
         }
     }
 
     pub fn move_right(&mut self) {
+        // TODO: make sure we don't run into existing blocks
         if self.current_piece.col < self.width - 1 {
             self.current_piece.col += 1;
         }
