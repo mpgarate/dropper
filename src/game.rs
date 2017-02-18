@@ -1,50 +1,42 @@
+use color::Color;
 use rand::{thread_rng, Rng};
-use std::cmp;
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum Color {
-    Red,
-    Yellow,
-    Blue,
-    Green,
+pub enum MoveDirection {
+    Left,
+    Right
 }
 
-impl Color {
-    fn rand() -> Color {
-        let mut rng = thread_rng();
+pub enum PieceGenerator{
+    Random(usize),
+    Exact(Vec<Piece>),
+}
 
-        rng.choose(&[
-            Color::Red,
-            Color::Yellow,
-            Color::Blue,
-            Color::Green,
-        ]).unwrap().clone()
-    }
+// TODO refactor this into a trait
+impl PieceGenerator {
+    pub fn next(&mut self) -> Piece {
+        match self {
+            &mut PieceGenerator::Random(max_col) => {
+                let mut rng = thread_rng();
 
-    pub fn as_rgba(&self) -> [f32; 4] {
-        match *self {
-            Color::Red => [0.8, 0.0, 0.0, 1.0],
-            Color::Yellow => [1.0, 1.0, 0.5, 1.0],
-            Color::Blue => [0.0, 0.5, 1.0, 1.0],
-            Color::Green => [0.0, 0.5, 0.0, 1.0],
+                Piece {
+                    row: 0,
+                    col: rng.gen_range(0, max_col),
+                    color: Color::rand(),
+                }
+            },
+            &mut PieceGenerator::Exact(ref mut pieces) => pieces.remove(0),
         }
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Piece {
-    col: usize,
     row: usize,
+    col: usize,
     color: Color,
 }
 
 impl Piece {
-    pub fn new() -> Piece {
-        let color = Color::rand();
-
-         Piece {col: 0, row: 0, color: color}
-    }
-
     pub fn row(&self) -> usize {
         self.row
     }
@@ -60,177 +52,172 @@ impl Piece {
 
 pub struct Game {
     current_piece: Piece,
-    height: usize,
+    piece_generator: PieceGenerator,
+    board: Vec<Vec<Option<Color>>>,
+    num_rows_cleared: u64,
     width: usize,
-    pieces: Vec<Vec<Option<Piece>>>,
 }
 
 impl Game {
-    pub fn new(height: usize, width: usize) -> Game {
+    pub fn new(height: usize, width: usize, mut piece_generator: PieceGenerator) -> Game {
+        let piece = piece_generator.next();
+        println!("starting with piece {:?}", piece);
+
         Game {
-            current_piece: Piece::new(),
-            height: height,
+            piece_generator: piece_generator,
+            current_piece: piece,
+            board: vec![vec![None; width]; height],
+            num_rows_cleared: 0,
             width: width,
-            pieces: vec![vec![None; width]; height],
         }
     }
 
-    fn is_current_piece_blocked(&self) -> bool {
-        let col = self.current_piece.col;
-        let row = self.current_piece.row + 1;
+    pub fn drop_piece(&mut self) {
+        let row = self.current_piece.row();
+        let color = self.current_piece.color.clone();
 
-        if row >= self.height {
-            return true
-        }
+        let first_free_space = self.board.get(row.clone()).unwrap()
+            .iter()
+            .position(|color| color.is_none())
+            .unwrap();
 
-        println!("in is_current_piece_blocked");
-        self.pieces.get(row).and_then(|columns| columns.get(col)).unwrap_or(&None).is_some()
-    }
+        println!("setting color {:?}", color.clone());
+        self.board.get_mut(row).unwrap()[first_free_space] = Some(color);
 
-    fn matches_color(&self, row: isize, col: isize) -> bool {
-        let piece: Option<Piece> = self.pieces.get(row as usize).and_then(|columns| {
-            println!("in matches_color");
-            columns.get(col as usize).unwrap_or(&None).clone()
-        });
-
-        match piece {
-            Some(ref p) => {
-                self.current_piece.color == p.color
-            }
-            _ => false,
-        }
-    }
-
-    fn remove_cleared_pieces(&mut self) {
-        let row = self.current_piece.row as isize;
-        let col = self.current_piece.col as isize;
-
-        let clear_cases = [
-            // vertical
-            vec![
-                (row, col),
-                (row + 1, col),
-                (row + 2, col),
-                (row + 3, col),
-            ],
-            // horizontal
-            vec![
-                (row, col - 3),
-                (row, col - 2),
-                (row, col - 1),
-                (row, col),
-                (row, col + 1),
-                (row, col + 2),
-                (row, col + 3),
-            ],
-            // upward diagonal
-            vec![
-                (row - 3, col - 3),
-                (row - 2, col - 2),
-                (row - 1, col - 1),
-                (row, col),
-                (row + 1, col + 1),
-                (row + 2, col + 2),
-                (row + 3, col + 3),
-            ],
-            // downward diagonal
-            vec![
-                (row + 3, col - 3),
-                (row + 2, col - 2),
-                (row + 1, col - 1),
-                (row, col),
-                (row - 1, col + 1),
-                (row - 2, col + 2),
-                (row - 3, col + 3),
-            ],
-        ];
-
-
-        for case in clear_cases.iter() {
-            let sequence: Vec<_> = case.iter()
-                .skip_while(|&&(row, col)| !self.matches_color(row, col))
-                .take_while(|&&(row, col)| self.matches_color(row, col))
-                .collect();
-
-            if sequence.len() >= 4 {
-                println!("got a seq");
-                for &(row, col) in sequence {
-                    println!("GOT HERE 2");
-                    let mut row = self.pieces.get_mut(row as usize).unwrap();
-                    row.push(None);
-                    row.swap_remove(col as usize);
-                }
-
-                self.refresh_piece_rows_and_cols();
-            } else {
-                println!("too short {:?}", sequence.len());
-            }
-        }
-    }
-
-    fn refresh_piece_rows_and_cols(&mut self) {
-        self.pieces = self.pieces.iter()
-            .filter(|col| {
-                col.iter().all(|piece| piece.is_some())
-            })
-            .enumerate()
-            .map(|(row_index, col)| {
-                col.iter().enumerate().map(|(col_index, piece)| {
-                    if let Some(ref p) = *piece {
-                        Some(Piece {
-                            row: row_index,
-                            col: col_index,
-                            color: p.color.clone(),
-                        })
-                    } else {
-                        None
-                    }
-                }).collect()
-            }).collect();
-    }
-
-    pub fn step(&mut self) {
-        if self.is_current_piece_blocked() {
-            if let Some(col) = self.pieces.get_mut(self.current_piece.row) {
-                col[self.current_piece.col] = Some(self.current_piece.clone());
-            } else {
-                println!("step");
-                panic!()
-            }
-
-            self.remove_cleared_pieces();
-            self.current_piece = Piece::new();
-        } else {
-            self.current_piece.row += 1;
-        }
-    }
-
-    pub fn move_left(&mut self) {
-        // TODO: make sure we don't run into existing blocks
-        if self.current_piece.col > 0 {
-            self.current_piece.col -= 1;
-        }
-    }
-
-    pub fn move_right(&mut self) {
-        // TODO: make sure we don't run into existing blocks
-        if self.current_piece.col < self.width - 1 {
-            self.current_piece.col += 1;
-        }
+        self.current_piece = self.piece_generator.next();
     }
 
     pub fn get_pieces(&self) -> Vec<Piece> {
-        self.pieces.iter()
-            .flat_map(|col| col.iter().flat_map(|piece| piece.clone()))
+        self.board.iter()
+            .enumerate()
+            .flat_map(|(row_num, col)| {
+                let pieces: Vec<Piece> = col.iter()
+                    .enumerate()
+                    .filter_map(|(col_num, color)| {
+                        if let Some(c) = color.clone() {
+                            Some(Piece { row: row_num, col: col_num, color: c })
+                        } else {
+                            None
+                        }
+                    }).collect();
+                pieces
+            })
             .chain(vec![self.current_piece.clone()])
             .collect()
     }
 
-    pub fn current_piece_col(&self) -> usize {
-        self.current_piece.col
+    pub fn move_piece(&mut self, direction: MoveDirection) {
+        let col = self.current_piece.col();
+
+        let new_col = match direction {
+            MoveDirection::Left if col > 0 => col - 1,
+            MoveDirection::Right if col < self.width - 1 => col + 1,
+            _ => col,
+        };
+
+        self.current_piece.col = new_col;
     }
 
-    pub fn current_piece_row(&self) -> usize {
-        self.current_piece.row
+    pub fn step(&mut self) {
+    }
+
+    pub fn num_rows_cleared(&self) -> u64 {
+        self.num_rows_cleared
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use game::Game;
+    use game::MoveDirection;
+    use game::Piece;
+    use game::PieceGenerator;
+    use color::Color;
+
+    const HEIGHT: usize = 16;
+    const WIDTH: usize = 4;
+
+    #[test]
+    fn move_right() {
+        let pieces_to_drop = vec![
+            Piece { row: 0, col: 0, color: Color::Red },
+        ];
+
+        let expected_pieces = vec![
+            Piece { row: 0, col: 1, color: Color::Red },
+        ];
+
+        let mut game = Game::new(
+            HEIGHT,
+            WIDTH,
+            PieceGenerator::Exact(pieces_to_drop),
+        );
+
+        game.move_piece(MoveDirection::Right);
+
+        assert_eq!(expected_pieces, game.get_pieces());
+    }
+
+    #[test]
+    fn move_left() {
+        let pieces_to_drop = vec![
+            Piece { row: 0, col: 3, color: Color::Red },
+        ];
+
+        let expected_pieces = vec![
+            Piece { row: 0, col: 2, color: Color::Red },
+        ];
+
+        let mut game = Game::new(
+            HEIGHT,
+            WIDTH,
+            PieceGenerator::Exact(pieces_to_drop),
+        );
+
+        game.move_piece(MoveDirection::Left);
+
+        assert_eq!(expected_pieces, game.get_pieces());
+    }
+
+    #[test]
+    fn move_right_stops_at_game_edge() {
+        let pieces_to_drop = vec![
+            Piece { row: 0, col: WIDTH - 1, color: Color::Red },
+        ];
+
+        let expected_pieces = vec![
+            Piece { row: 0, col: WIDTH - 1, color: Color::Red },
+        ];
+
+        let mut game = Game::new(
+            HEIGHT,
+            WIDTH,
+            PieceGenerator::Exact(pieces_to_drop),
+        );
+
+        game.move_piece(MoveDirection::Right);
+
+        assert_eq!(expected_pieces, game.get_pieces());
+    }
+
+    #[test]
+    fn move_left_stops_at_game_edge() {
+        let pieces_to_drop = vec![
+            Piece { row: 0, col: 0, color: Color::Red },
+        ];
+
+        let expected_pieces = vec![
+            Piece { row: 0, col: 0, color: Color::Red },
+        ];
+
+        let mut game = Game::new(
+            HEIGHT,
+            WIDTH,
+            PieceGenerator::Exact(pieces_to_drop),
+        );
+
+        game.move_piece(MoveDirection::Left);
+
+        assert_eq!(expected_pieces, game.get_pieces());
     }
 }

@@ -5,17 +5,19 @@ extern crate find_folder;
 use piston_window::*;
 use dropper::frame_timer::FrameTimer;
 use dropper::game::Game;
+use dropper::game::PieceGenerator;
+use dropper::game::MoveDirection;
 
 use std::time::{Duration};
 
-const WINDOW_WIDTH: u32 = 512;
-const WINDOW_HEIGHT: u32 = 512;
+const GAME_WIDTH: usize = 4;
+const GAME_HEIGHT: usize = 16;
 
 const BLOCK_WIDTH: u32 = 128;
 const BLOCK_HEIGHT: u32 = 32;
 
-const GAME_HEIGHT: u32 = WINDOW_HEIGHT / BLOCK_HEIGHT;
-const GAME_WIDTH: u32 = WINDOW_WIDTH / BLOCK_WIDTH;
+const WINDOW_WIDTH: u32 = BLOCK_WIDTH * GAME_WIDTH as u32;
+const WINDOW_HEIGHT: u32 = BLOCK_HEIGHT * GAME_HEIGHT as u32;
 
 const FRAME_RATE: u64 = 50; 
 
@@ -30,7 +32,12 @@ fn main() {
         .unwrap();
 
     let mut frame_timer = FrameTimer::new(Duration::from_millis(FRAME_RATE));
-    let mut game = Game::new(GAME_HEIGHT as usize, GAME_WIDTH as usize);
+
+    let mut game = Game::new(
+        GAME_HEIGHT,
+        GAME_WIDTH,
+        PieceGenerator::Random(GAME_WIDTH),
+    );
 
     while let Some(e) = window.next() {
         if frame_timer.next_frame() {
@@ -57,11 +64,11 @@ fn main() {
         });
 
         if let Some(Button::Keyboard(Key::Left)) = e.press_args() {
-            game.move_left();
+            game.move_piece(MoveDirection::Left);
         }
 
         if let Some(Button::Keyboard(Key::Right)) = e.press_args() {
-            game.move_right();
+            game.move_piece(MoveDirection::Right);
         }
     }
 }
