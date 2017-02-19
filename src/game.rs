@@ -11,7 +11,6 @@ pub enum PieceGenerator{
     Exact(Vec<Piece>),
 }
 
-// TODO refactor this into a trait
 impl PieceGenerator {
     pub fn next(&mut self) -> Piece {
         match self {
@@ -45,6 +44,10 @@ impl Piece {
         self.col
     }
 
+    pub fn color(&self) -> Color {
+        self.color.clone()
+    }
+
     pub fn color_rgba(&self) -> [f32; 4]{
         self.color.as_rgba()
     }
@@ -56,6 +59,7 @@ pub struct Game {
     board: Vec<Vec<Option<Color>>>,
     num_rows_cleared: u64,
     width: usize,
+    height: usize,
 }
 
 impl Game {
@@ -68,12 +72,13 @@ impl Game {
             board: vec![vec![None; width]; height],
             num_rows_cleared: 0,
             width: width,
+            height: height,
         }
     }
 
     pub fn drop_piece(&mut self) {
         let col = self.current_piece.col();
-        let color = self.current_piece.color.clone();
+        let color = self.current_piece.color();
 
         let first_free_row = self.board
             .iter()
@@ -117,6 +122,29 @@ impl Game {
     }
 
     pub fn step(&mut self) {
+        let row = self.current_piece.row();
+
+        if row < self.height - 1  {
+            let new_row = row + 1;
+
+            let is_piece_below = self.board.get(new_row.clone())
+                .unwrap_or(&vec![])
+                .get(self.current_piece.col())
+                .unwrap_or(&None)
+                .is_some();
+
+            if is_piece_below {
+                self.drop_piece();
+            } else {
+                self.current_piece = Piece {
+                    row: new_row,
+                    col: self.current_piece.col(),
+                    color: self.current_piece.color(),
+                }
+            }
+        } else {
+            self.drop_piece();
+        }
     }
 
     pub fn num_rows_cleared(&self) -> u64 {
@@ -264,6 +292,81 @@ mod tests {
 
         game.drop_piece();
         game.drop_piece();
+
+        let mut actual_pieces = game.get_pieces();
+
+        expected_pieces.sort();
+        actual_pieces.sort();
+
+        assert_eq!(expected_pieces, actual_pieces);
+    }
+
+    #[test]
+    fn step_moves_current_piece_down() {
+        let pieces_to_drop = vec![
+            Piece { row: 0, col: 0, color: Color::Red },
+        ];
+
+        let expected_pieces = vec![
+            Piece { row: 1, col: 0, color: Color::Red },
+        ];
+
+        let mut game = Game::new(
+            HEIGHT,
+            WIDTH,
+            PieceGenerator::Exact(pieces_to_drop),
+        );
+
+        game.step();
+
+        assert_eq!(expected_pieces, game.get_pieces());
+    }
+
+    #[test]
+    fn step_to_bottom_drops_and_creates_new_piece() {
+        let pieces_to_drop = vec![
+            Piece { row: HEIGHT - 1, col: 0, color: Color::Red },
+            Piece { row: 0, col: 0, color: Color::Yellow },
+        ];
+
+        let expected_pieces = vec![
+            Piece { row: HEIGHT - 1, col: 0, color: Color::Red },
+            Piece { row: 0, col: 0, color: Color::Yellow },
+        ];
+
+        let mut game = Game::new(
+            HEIGHT,
+            WIDTH,
+            PieceGenerator::Exact(pieces_to_drop),
+        );
+
+        game.step();
+
+        assert_eq!(expected_pieces, game.get_pieces());
+    }
+
+    #[test]
+    fn step_to_other_piece_drops_and_creates_new_piece() {
+        let pieces_to_drop = vec![
+            Piece { row: 0, col: 0, color: Color::Red },
+            Piece { row: HEIGHT - 2, col: 0, color: Color::Yellow },
+            Piece { row: 0, col: 0, color: Color::Blue },
+        ];
+
+        let mut expected_pieces = vec![
+            Piece { row: HEIGHT - 1, col: 0, color: Color::Red },
+            Piece { row: HEIGHT - 2, col: 0, color: Color::Yellow },
+            Piece { row: 0, col: 0, color: Color::Blue },
+        ];
+
+        let mut game = Game::new(
+            HEIGHT,
+            WIDTH,
+            PieceGenerator::Exact(pieces_to_drop),
+        );
+
+        game.drop_piece();
+        game.step();
 
         let mut actual_pieces = game.get_pieces();
 
