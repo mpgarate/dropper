@@ -123,24 +123,20 @@ impl Game {
 
     pub fn step(&mut self) {
         let row = self.current_piece.row();
+        let new_row = row + 1;
 
-        if row < self.height - 1  {
-            let new_row = row + 1;
+        let is_valid_row = new_row < self.height;
+        let is_piece_below = self.board.get(new_row.clone())
+            .unwrap_or(&vec![])
+            .get(self.current_piece.col())
+            .unwrap_or(&None)
+            .is_some();
 
-            let is_piece_below = self.board.get(new_row.clone())
-                .unwrap_or(&vec![])
-                .get(self.current_piece.col())
-                .unwrap_or(&None)
-                .is_some();
-
-            if is_piece_below {
-                self.drop_piece();
-            } else {
-                self.current_piece = Piece {
-                    row: new_row,
-                    col: self.current_piece.col(),
-                    color: self.current_piece.color(),
-                }
+        if is_valid_row && !is_piece_below {
+            self.current_piece = Piece {
+                row: new_row,
+                col: self.current_piece.col(),
+                color: self.current_piece.color(),
             }
         } else {
             self.drop_piece();
