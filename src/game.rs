@@ -29,7 +29,7 @@ impl PieceGenerator {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Piece {
     row: usize,
     col: usize,
@@ -61,7 +61,6 @@ pub struct Game {
 impl Game {
     pub fn new(height: usize, width: usize, mut piece_generator: PieceGenerator) -> Game {
         let piece = piece_generator.next();
-        println!("starting with piece {:?}", piece);
 
         Game {
             piece_generator: piece_generator,
@@ -73,16 +72,15 @@ impl Game {
     }
 
     pub fn drop_piece(&mut self) {
-        let row = self.current_piece.row();
+        let col = self.current_piece.col();
         let color = self.current_piece.color.clone();
 
-        let first_free_space = self.board.get(row.clone()).unwrap()
+        let first_free_row = self.board
             .iter()
-            .position(|color| color.is_none())
+            .rposition(|row| row.get(col.clone()).unwrap_or(&None).is_none())
             .unwrap();
 
-        println!("setting color {:?}", color.clone());
-        self.board.get_mut(row).unwrap()[first_free_space] = Some(color);
+        self.board.get_mut(first_free_row).unwrap()[col] = Some(color);
 
         self.current_piece = self.piece_generator.next();
     }
@@ -219,5 +217,59 @@ mod tests {
         game.move_piece(MoveDirection::Left);
 
         assert_eq!(expected_pieces, game.get_pieces());
+    }
+
+    #[test]
+    fn drop_piece_empty_board() {
+        let pieces_to_drop = vec![
+            Piece { row: 0, col: 0, color: Color::Red },
+            Piece { row: 0, col: 0, color: Color::Yellow },
+        ];
+
+        let expected_pieces = vec![
+            Piece { row: HEIGHT - 1, col: 0, color: Color::Red },
+            Piece { row: 0, col: 0, color: Color::Yellow },
+        ];
+
+        let mut game = Game::new(
+            HEIGHT,
+            WIDTH,
+            PieceGenerator::Exact(pieces_to_drop),
+        );
+
+        game.drop_piece();
+
+        assert_eq!(expected_pieces, game.get_pieces());
+    }
+
+    #[test]
+    fn drop_piece_on_another_piece() {
+        let pieces_to_drop = vec![
+            Piece { row: 0, col: 0, color: Color::Yellow },
+            Piece { row: 0, col: 0, color: Color::Red },
+            Piece { row: 0, col: 0, color: Color::Blue },
+        ];
+
+        let mut expected_pieces = vec![
+            Piece { row: HEIGHT - 2, col: 0, color: Color::Red },
+            Piece { row: HEIGHT - 1, col: 0, color: Color::Yellow },
+            Piece { row: 0, col: 0, color: Color::Blue },
+        ];
+
+        let mut game = Game::new(
+            HEIGHT,
+            WIDTH,
+            PieceGenerator::Exact(pieces_to_drop),
+        );
+
+        game.drop_piece();
+        game.drop_piece();
+
+        let mut actual_pieces = game.get_pieces();
+
+        expected_pieces.sort();
+        actual_pieces.sort();
+
+        assert_eq!(expected_pieces, actual_pieces);
     }
 }

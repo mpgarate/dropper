@@ -1,6 +1,6 @@
 use rand::{thread_rng, Rng};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Color {
     Red,
     Yellow,
