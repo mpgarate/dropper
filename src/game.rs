@@ -1,4 +1,5 @@
 use color::Color;
+use board::Board;
 use rand::{thread_rng, Rng};
 
 pub enum MoveDirection {
@@ -30,9 +31,9 @@ impl PieceGenerator {
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Piece {
-    row: usize,
-    col: usize,
-    color: Color,
+    pub row: usize,
+    pub col: usize,
+    pub color: Color,
 }
 
 impl Piece {
@@ -56,20 +57,24 @@ impl Piece {
 pub struct Game {
     current_piece: Piece,
     piece_generator: PieceGenerator,
-    board: Vec<Vec<Option<Color>>>,
+    board: Board, 
     num_rows_cleared: u64,
     width: usize,
     height: usize,
 }
 
 impl Game {
-    pub fn new(height: usize, width: usize, mut piece_generator: PieceGenerator) -> Game {
+    pub fn new(
+        height: usize,
+        width: usize, 
+        mut piece_generator: PieceGenerator,
+    ) -> Game {
         let piece = piece_generator.next();
 
         Game {
             piece_generator: piece_generator,
             current_piece: piece,
-            board: vec![vec![None; width]; height],
+            board: Board::new(width, height), 
             num_rows_cleared: 0,
             width: width,
             height: height,
@@ -80,31 +85,18 @@ impl Game {
         let col = self.current_piece.col();
         let color = self.current_piece.color();
 
-        let first_free_row = self.board
-            .iter()
-            .rposition(|row| row.get(col.clone()).unwrap_or(&None).is_none())
-            .unwrap();
+        let first_free_row = self.board.get_lowest_free_row_in_col(col);
 
-        self.board.get_mut(first_free_row).unwrap()[col] = Some(color);
+        self.board.set(first_free_row, col, color);
 
         self.current_piece = self.piece_generator.next();
     }
 
     pub fn get_pieces(&self) -> Vec<Piece> {
-        self.board.iter()
-            .enumerate()
-            .flat_map(|(row_num, col)| {
-                let pieces: Vec<Piece> = col.iter()
-                    .enumerate()
-                    .filter_map(|(col_num, color)| {
-                        if let Some(c) = color.clone() {
-                            Some(Piece { row: row_num, col: col_num, color: c })
-                        } else {
-                            None
-                        }
-                    }).collect();
-                pieces
-            })
+        let pieces: Vec<Piece> = self.board.get_pieces();
+
+        pieces.iter()
+            .map(|x| x.clone())
             .chain(vec![self.current_piece.clone()])
             .collect()
     }
@@ -126,10 +118,7 @@ impl Game {
         let new_row = row + 1;
 
         let is_valid_row = new_row < self.height;
-        let is_piece_below = self.board.get(new_row.clone())
-            .unwrap_or(&vec![])
-            .get(self.current_piece.col())
-            .unwrap_or(&None)
+        let is_piece_below = self.board.get(new_row.clone(), self.current_piece.col())
             .is_some();
 
         if is_valid_row && !is_piece_below {
