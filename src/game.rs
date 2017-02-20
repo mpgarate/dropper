@@ -93,9 +93,8 @@ impl Game {
     }
 
     pub fn get_pieces(&self) -> Vec<Piece> {
-        let pieces: Vec<Piece> = self.board.get_pieces();
-
-        pieces.iter()
+        self.board.get_pieces()
+            .iter()
             .map(|x| x.clone())
             .chain(vec![self.current_piece.clone()])
             .collect()

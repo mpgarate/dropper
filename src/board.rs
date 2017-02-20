@@ -1,6 +1,8 @@
 use color::Color;
 use game::Piece;
 
+
+#[derive(Debug, PartialEq, Eq)]
 pub struct Board {
     color_matrix: Vec<Vec<Option<Color>>>,
 }
@@ -46,5 +48,78 @@ impl Board {
         self.color_matrix.iter()
             .rposition(|row| row.get(col).unwrap_or(&None).is_none())
             .unwrap()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use board::Board;
+    use color::Color::*;
+
+    #[test]
+    fn set_a_color() {
+        let mut board = Board {
+            color_matrix: vec![
+                vec![ Some(Red), Some(Red) ],
+                vec![ Some(Red), Some(Red) ],
+            ],
+        };
+
+        board.set(1, 1, Yellow);
+
+        let expected_board = Board {
+            color_matrix: vec![
+                vec![ Some(Red), Some(Red) ],
+                vec![ Some(Red), Some(Yellow) ],
+            ],
+        };
+
+        assert_eq!(expected_board, board);
+    }
+
+    #[test]
+    fn get_a_color() {
+        let board = Board {
+            color_matrix: vec![
+                vec![ Some(Red), Some(Blue) ],
+                vec![ Some(Red), Some(Yellow) ],
+            ],
+        };
+
+        let color = board.get(0, 1);
+
+        let expected_color = Some(Blue);
+
+        assert_eq!(expected_color, color);
+    }
+
+    #[test]
+    fn get_lowest_free_row_in_col() {
+        let board = Board {
+            color_matrix: vec![
+                vec![ None, None ],
+                vec![ None, None ],
+            ],
+        };
+
+        let row = board.get_lowest_free_row_in_col(0);
+        let expected_row = 1;
+
+        assert_eq!(expected_row, row);
+    }
+
+    #[test]
+    fn get_lowest_free_row_in_col_with_another_existing_piece() {
+        let board = Board {
+            color_matrix: vec![
+                vec![ None, None ],
+                vec![ Some(Red), None ],
+            ],
+        };
+
+        let row = board.get_lowest_free_row_in_col(0);
+        let expected_row = 0;
+
+        assert_eq!(expected_row, row);
     }
 }
