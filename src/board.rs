@@ -55,8 +55,7 @@ impl Board {
 
     fn get_sequences_in_coordinate_list(
         &self,
-        row_range: Range<usize>,
-        col_range: Range<usize>,
+        coordinates: Vec<(usize, usize)>
     ) -> Vec<Vec<Piece>>
         {
         println!("callin it!");
@@ -67,34 +66,32 @@ impl Board {
 
         let mut sequence: Vec<Piece> = vec![];
 
-        for row in row_range {
-            for col in col_range.clone() {
-                let color = self.get(row, col);
+        for (row, col) in coordinates {
+            let color = self.get(row, col);
 
-                let prev_color = match sequence.last() {
-                    Some(piece) => Some(piece.color()),
-                    _ => None,
-                };
+            let prev_color = match sequence.last() {
+                Some(piece) => Some(piece.color()),
+                _ => None,
+            };
 
-                match (color, prev_color) {
-                    (Some(ref c1), Some(ref c2)) if c1 == c2 => {
-                        sequence.push(Piece {row: row, col: col, color: c1.clone() });
-                    },
-                    (Some(c1), None) => {
-                        if sequence.len() >= sequence_clear_len {
-                            sequences.push(sequence.clone());
-                        }
-
-                        sequence.clear();
-                        sequence.push(Piece {row: row, col: col, color: c1.clone() });
-                    },
-                    _ => {
-                        if sequence.len() >= sequence_clear_len {
-                            sequences.push(sequence.clone());
-                        }
-
-                        sequence.clear();
+            match (color, prev_color) {
+                (Some(ref c1), Some(ref c2)) if c1 == c2 => {
+                    sequence.push(Piece {row: row, col: col, color: c1.clone() });
+                },
+                (Some(c1), None) => {
+                    if sequence.len() >= sequence_clear_len {
+                        sequences.push(sequence.clone());
                     }
+
+                    sequence.clear();
+                    sequence.push(Piece {row: row, col: col, color: c1.clone() });
+                },
+                _ => {
+                    if sequence.len() >= sequence_clear_len {
+                        sequences.push(sequence.clone());
+                    }
+
+                    sequence.clear();
                 }
             }
         }
@@ -111,9 +108,14 @@ impl Board {
 
         // vertical
         for col in 0..self.width() {
+            let mut coordinates = vec![];
+
+            for row in 0..self.height() {
+                coordinates.push((row, col));
+            }
+
             let new_sequences = self.get_sequences_in_coordinate_list(
-                (0..self.height()),
-                (col..col+ 1),
+                coordinates
             );
 
             for s in new_sequences {
@@ -123,9 +125,14 @@ impl Board {
 
         // horizontal
         for row in 0..self.height() {
+            let mut coordinates = vec![];
+
+            for col in 0..self.width() {
+                coordinates.push((row, col));
+            }
+
             let new_sequences = self.get_sequences_in_coordinate_list(
-                (row..row+ 1),
-                (0..self.width()),
+                coordinates
             );
 
             for s in new_sequences {
