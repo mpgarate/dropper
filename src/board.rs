@@ -125,7 +125,22 @@ impl Board {
         for starting_col in 1..self.width() {
             let mut coordinates = vec![];
 
-            for (row, col) in (0...(self.height() - 1)).rev().zip(starting_col..self.width()) {
+            for (row, col) in (0..self.height()).rev().zip(starting_col..self.width()) {
+                coordinates.push((row, col));
+            }
+
+            let new_pieces = self.get_sequential_pieces(coordinates);
+
+            for s in new_pieces {
+                pieces.push(s);
+            }
+        }
+
+        // diagonal down by row, looks like \
+        for starting_row in 0..self.height() {
+            let mut coordinates = vec![];
+
+            for (row, col) in (starting_row..self.height()).zip(0..self.width()) {
                 coordinates.push((row, col));
             }
 
@@ -154,6 +169,32 @@ mod tests {
     use board::Board;
     use color::Color::*;
     use game::Piece;
+
+    #[test]
+    fn get_pieces_to_clear_diagonal_down() {
+        let board = Board {
+            color_matrix: vec![
+                vec![ Some(Red), None, None, None ],
+                vec![ None, Some(Red), None, None ],
+                vec![ None, None, Some(Red), None ],
+                vec![ None, None, None, Some(Red) ],
+            ],
+        };
+
+        let mut expected_pieces_to_clear = vec![
+            Piece { row: 0, col: 0, color: Red },
+            Piece { row: 1, col: 1, color: Red },
+            Piece { row: 2, col: 2, color: Red },
+            Piece { row: 3, col: 3, color: Red },
+        ];
+
+        let mut pieces_to_clear = board.get_pieces_to_clear();
+
+        expected_pieces_to_clear.sort();
+        pieces_to_clear.sort();
+
+        assert_eq!(expected_pieces_to_clear, pieces_to_clear);
+    }
 
     #[test]
     fn get_pieces_to_clear_diagonal_up() {
