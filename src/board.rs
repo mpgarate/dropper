@@ -121,6 +121,18 @@ impl Board {
             }
         }
 
+        // horizontal
+        for row in 0..self.height() {
+            let new_sequences = self.get_sequences_in_coordinate_list(
+                (row..row+ 1),
+                (0..self.width()),
+            );
+
+            for s in new_sequences {
+                sequences.push(s);
+            }
+        }
+
         sequences
     }
 
@@ -140,7 +152,6 @@ mod tests {
     use color::Color::*;
     use game::Piece;
 
-    /*
     #[test]
     fn get_sequences_to_clear_horizontal() {
         let board = Board {
@@ -163,7 +174,6 @@ mod tests {
 
         assert_eq!(expected_sequences_to_clear, sequences_to_clear);
     }
-    */
 
     #[test]
     fn get_sequences_to_clear_vertical() {
