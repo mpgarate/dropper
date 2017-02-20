@@ -58,7 +58,6 @@ impl Board {
         coordinates: Vec<(usize, usize)>
     ) -> Vec<Vec<Piece>>
         {
-        println!("callin it!");
 
         let sequence_clear_len = 4;
 
@@ -140,6 +139,40 @@ impl Board {
             }
         }
 
+        // diagonal up by row, looks like /
+        for starting_row in 0..self.height() {
+            let mut coordinates = vec![];
+
+            for (row, col) in (0...starting_row).rev().zip(0..self.width()) {
+                coordinates.push((row, col));
+            }
+
+            let new_sequences = self.get_sequences_in_coordinate_list(
+                coordinates
+            );
+
+            for s in new_sequences {
+                sequences.push(s);
+            }
+        }
+
+        // diagonal up by col, looks like /
+        for starting_col in 1..self.width() {
+            let mut coordinates = vec![];
+
+            for (row, col) in (0...(self.height() - 1)).rev().zip(starting_col..self.width()) {
+                coordinates.push((row, col));
+            }
+
+            let new_sequences = self.get_sequences_in_coordinate_list(
+                coordinates
+            );
+
+            for s in new_sequences {
+                sequences.push(s);
+            }
+        }
+
         sequences
     }
 
@@ -158,6 +191,86 @@ mod tests {
     use board::Board;
     use color::Color::*;
     use game::Piece;
+
+    #[test]
+    fn get_sequences_to_clear_diagonal_up() {
+        let board = Board {
+            color_matrix: vec![
+                vec![ None, None, None, Some(Red) ],
+                vec![ None, None, Some(Red), None ],
+                vec![ None, Some(Red), None, None ],
+                vec![ Some(Red), None, None, None ],
+            ],
+        };
+
+        let mut expected_sequences_to_clear = vec![vec![
+            Piece { row: 3, col: 0, color: Red },
+            Piece { row: 2, col: 1, color: Red },
+            Piece { row: 1, col: 2, color: Red },
+            Piece { row: 0, col: 3, color: Red },
+        ]];
+
+        let mut sequences_to_clear = board.get_sequences_to_clear();
+
+        expected_sequences_to_clear.sort();
+        sequences_to_clear.sort();
+
+        assert_eq!(expected_sequences_to_clear, sequences_to_clear);
+    }
+
+    #[test]
+    fn get_sequences_to_clear_diagonal_up_off_center_up() {
+        let board = Board {
+            color_matrix: vec![
+                vec![ None, None, None, Some(Red), None ],
+                vec![ None, None, Some(Red), None, None ],
+                vec![ None, Some(Red), None, None, None ],
+                vec![ Some(Red), None, None, None, None ],
+                vec![ None, None, None, None, None ],
+            ],
+        };
+
+        let mut expected_sequences_to_clear = vec![vec![
+            Piece { row: 3, col: 0, color: Red },
+            Piece { row: 2, col: 1, color: Red },
+            Piece { row: 1, col: 2, color: Red },
+            Piece { row: 0, col: 3, color: Red },
+        ]];
+
+        let mut sequences_to_clear = board.get_sequences_to_clear();
+
+        expected_sequences_to_clear.sort();
+        sequences_to_clear.sort();
+
+        assert_eq!(expected_sequences_to_clear, sequences_to_clear);
+    }
+
+    #[test]
+    fn get_sequences_to_clear_diagonal_up_off_center_down() {
+        let board = Board {
+            color_matrix: vec![
+                vec![ None, None, None, None, None ],
+                vec![ None, None, None, None, Some(Red) ],
+                vec![ None, None, None, Some(Red), None ],
+                vec![ None, None, Some(Red), None, None ],
+                vec![ None, Some(Red), None, None, None ],
+            ],
+        };
+
+        let mut expected_sequences_to_clear = vec![vec![
+            Piece { row: 4, col: 1, color: Red },
+            Piece { row: 3, col: 2, color: Red },
+            Piece { row: 2, col: 3, color: Red },
+            Piece { row: 1, col: 4, color: Red },
+        ]];
+
+        let mut sequences_to_clear = board.get_sequences_to_clear();
+
+        expected_sequences_to_clear.sort();
+        sequences_to_clear.sort();
+
+        assert_eq!(expected_sequences_to_clear, sequences_to_clear);
+    }
 
     #[test]
     fn get_sequences_to_clear_horizontal() {
