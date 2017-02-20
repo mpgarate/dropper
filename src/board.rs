@@ -1,5 +1,6 @@
 use color::Color;
 use game::Piece;
+use clear_strategy::ClearStrategy;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Board {
@@ -74,35 +75,36 @@ impl Board {
     }
 
     pub fn get_pieces_to_clear(&self) -> Vec<Piece> {
+        let is_invalid_point = |row, col| row >= self.height() || col >= self.width();
+
+        let strategies = vec![
+            ClearStrategy::Vertical,
+            ClearStrategy::Horizontal,
+        ];
+
         let mut pieces: Vec<Piece> = vec![];
 
-        // vertical
-        for col in 0..self.width() {
-            let mut coordinates = vec![];
+        for strategy in strategies {
+            for (mut row, mut col) in strategy.get_starting_points(self.height(), self.width()) {
+                let mut coordinates = vec![(row, col)];
+                loop {
+                    if is_invalid_point(row, col) {
+                        break;
+                    }
 
-            for row in 0..self.height() {
-                coordinates.push((row, col));
-            }
+                    println!("coordinates");
+                    println!("{:?}", (row, col));
+                    coordinates.push((row, col));
 
-            let new_pieces = self.get_sequential_pieces(coordinates);
+                    let point = strategy.get_next_point(row, col);
+                    row = point.0;
+                    col = point.1;
+                }
 
-            for s in new_pieces {
-                pieces.push(s);
-            }
-        }
-
-        // horizontal
-        for row in 0..self.height() {
-            let mut coordinates = vec![];
-
-            for col in 0..self.width() {
-                coordinates.push((row, col));
-            }
-
-            let new_pieces = self.get_sequential_pieces(coordinates);
-
-            for s in new_pieces {
-                pieces.push(s);
+                let new_pieces = self.get_sequential_pieces(coordinates);
+                for s in new_pieces {
+                    pieces.push(s);
+                }
             }
         }
 
