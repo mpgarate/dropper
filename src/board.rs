@@ -1,8 +1,6 @@
 use color::Color;
 use game::Piece;
 
-use std::ops::Range;
-
 #[derive(Debug, PartialEq, Eq)]
 pub struct Board {
     color_matrix: Vec<Vec<Option<Color>>>,
