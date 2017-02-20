@@ -51,22 +51,18 @@ impl Board {
             .collect()
     }
 
-    fn get_sequential_pieces_in_coordinate_list(&self, coordinates: Vec<(usize, usize)>) -> Vec<Piece> {
+    fn get_sequential_pieces(&self, coordinates: Vec<(usize, usize)>) -> Vec<Piece> {
         let mut sequence_coordinates: Vec<&(usize, usize)> = coordinates.windows(4)
             .filter(|sequence| {
-                if let Some(&(row_0, col_0)) = sequence.get(0) {
-                    if let Some(first_color) = self.get(row_0, col_0) {
+                sequence.get(0).map_or(false, |&(row_0, col_0)| {
+                    self.get(row_0, col_0).map_or(false, |first_color| {
                         sequence.iter().all(|&(row, col)| {
                             self.get(row, col) == Some(first_color.clone())
                         })
-                    } else {
-                        false
-                    }
-                } else {
-                    false
-                }
+                    })
+                })
             })
-            .flat_map(|sequence| sequence)
+            .flat_map(|s| s)
             .collect();
 
             sequence_coordinates.sort();
@@ -88,9 +84,7 @@ impl Board {
                 coordinates.push((row, col));
             }
 
-            let new_pieces = self.get_sequential_pieces_in_coordinate_list(
-                coordinates
-            );
+            let new_pieces = self.get_sequential_pieces(coordinates);
 
             for s in new_pieces {
                 pieces.push(s);
@@ -105,9 +99,7 @@ impl Board {
                 coordinates.push((row, col));
             }
 
-            let new_pieces = self.get_sequential_pieces_in_coordinate_list(
-                coordinates
-            );
+            let new_pieces = self.get_sequential_pieces(coordinates);
 
             for s in new_pieces {
                 pieces.push(s);
@@ -122,9 +114,7 @@ impl Board {
                 coordinates.push((row, col));
             }
 
-            let new_pieces = self.get_sequential_pieces_in_coordinate_list(
-                coordinates
-            );
+            let new_pieces = self.get_sequential_pieces(coordinates);
 
             for s in new_pieces {
                 pieces.push(s);
@@ -139,9 +129,7 @@ impl Board {
                 coordinates.push((row, col));
             }
 
-            let new_pieces = self.get_sequential_pieces_in_coordinate_list(
-                coordinates
-            );
+            let new_pieces = self.get_sequential_pieces(coordinates);
 
             for s in new_pieces {
                 pieces.push(s);
