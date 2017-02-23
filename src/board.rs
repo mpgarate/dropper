@@ -26,6 +26,22 @@ impl Board {
         self.color_matrix.get_mut(row).unwrap()[col] = Some(color);
     }
 
+    fn unset(&mut self, row: usize, col: usize) {
+        self.color_matrix.get_mut(row).unwrap()[col] = None;
+    }
+
+    fn remove_and_shift_column(&mut self, starting_row: usize, col: usize) {
+        for row in (starting_row..self.height()).rev() {
+            let piece_above = if row > 0 {
+                self.get(row - 1, col)
+            } else {
+                None
+            };
+
+            self.color_matrix.get_mut(row).unwrap()[col] = piece_above;
+        }
+    }
+
     pub fn get(&self, row: usize, col:usize) -> Option<Color> {
         self.color_matrix.get(row)
             .unwrap_or(&vec![])
@@ -106,8 +122,8 @@ impl Board {
                 }
 
                 let new_pieces = self.get_sequential_pieces(coordinates);
-                for s in new_pieces {
-                    pieces.push(s);
+                for p in new_pieces {
+                    pieces.push(p);
                 }
             }
         }
@@ -116,6 +132,20 @@ impl Board {
     }
 
     pub fn clear_all(&mut self, pieces: Vec<Piece>) {
+        for piece in pieces {
+            self.unset(piece.row(), piece.col());
+        }
+
+        for col in 0..self.width() {
+            for row in (0..self.height()).rev() {
+                let color = self.get(row, col);
+                let color_above = self.get(row + 1, col);
+
+                if let (None, Some(_)) = (color, color_above) {
+                    self.remove_and_shift_column(row, col);
+                }
+            }
+        }
     }
 
     pub fn get_lowest_free_row_in_col(&self, col: usize) -> usize {
@@ -130,6 +160,38 @@ mod tests {
     use board::Board;
     use color::Color::*;
     use game::Piece;
+
+    #[test]
+    fn delete_all_horizontal_row() {
+        let mut board = Board {
+            color_matrix: vec![
+                vec![ None, None, None, None ],
+                vec![ None, None, None, None ],
+                vec![ None, Some(Red), None, None ],
+                vec![ Some(Red), Some(Red), Some(Red), Some(Red) ],
+            ],
+        };
+
+        let pieces_to_clear = vec![
+            Piece { row: 3, col: 0, color: Red },
+            Piece { row: 3, col: 1, color: Red },
+            Piece { row: 3, col: 2, color: Red },
+            Piece { row: 3, col: 3, color: Red },
+        ];
+
+        let expected_board = Board {
+            color_matrix: vec![
+                vec![ None, None, None, None ],
+                vec![ None, None, None, None ],
+                vec![ None, None, None, None ],
+                vec![ None, Some(Red), None, None ],
+            ],
+        };
+
+        board.clear_all(pieces_to_clear);
+
+        assert_eq!(expected_board, board);
+    }
 
     #[test]
     fn get_pieces_to_clear_diagonal_down() {
