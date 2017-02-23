@@ -89,6 +89,9 @@ impl Game {
 
         self.board.set(first_free_row, col, color);
 
+        let pieces_to_clear = self.board.get_pieces_to_clear();
+        self.board.clear_all(pieces_to_clear);
+
         self.current_piece = self.piece_generator.next();
     }
 

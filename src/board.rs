@@ -31,7 +31,7 @@ impl Board {
     }
 
     fn remove_and_shift_column(&mut self, starting_row: usize, col: usize) {
-        for row in (starting_row..self.height()).rev() {
+        for row in (0...starting_row).rev() {
             let piece_above = if row > 0 {
                 self.get(row - 1, col)
             } else {
@@ -137,9 +137,9 @@ impl Board {
         }
 
         for col in 0..self.width() {
-            for row in (0..self.height()).rev() {
+            for row in (1..self.height()).rev() {
                 let color = self.get(row, col);
-                let color_above = self.get(row + 1, col);
+                let color_above = self.get(row - 1, col);
 
                 if let (None, Some(_)) = (color, color_above) {
                     self.remove_and_shift_column(row, col);
@@ -185,6 +185,29 @@ mod tests {
                 vec![ None, None, None, None ],
                 vec![ None, None, None, None ],
                 vec![ None, Some(Red), None, None ],
+            ],
+        };
+
+        board.clear_all(pieces_to_clear);
+
+        assert_eq!(expected_board, board);
+    }
+
+    #[test]
+    fn clear_all_empty_does_nothing() {
+        let mut board = Board {
+            color_matrix: vec![
+                vec![ None ],
+                vec![ Some(Red) ],
+            ],
+        };
+
+        let pieces_to_clear = vec![];
+
+        let expected_board = Board {
+            color_matrix: vec![
+                vec![ None ],
+                vec![ Some(Red) ],
             ],
         };
 

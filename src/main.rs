@@ -19,7 +19,7 @@ const BLOCK_HEIGHT: u32 = 32;
 const WINDOW_WIDTH: u32 = BLOCK_WIDTH * GAME_WIDTH as u32;
 const WINDOW_HEIGHT: u32 = BLOCK_HEIGHT * GAME_HEIGHT as u32;
 
-const FRAME_RATE: u64 = 50; 
+const FRAME_DURATION: u64 = 75; 
 
 fn main() {
     let mut window: PistonWindow = WindowSettings::new(
@@ -31,7 +31,7 @@ fn main() {
         .build()
         .unwrap();
 
-    let mut frame_timer = FrameTimer::new(Duration::from_millis(FRAME_RATE));
+    let mut frame_timer = FrameTimer::new(Duration::from_millis(FRAME_DURATION));
 
     let mut game = Game::new(
         GAME_HEIGHT,
