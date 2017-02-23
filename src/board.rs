@@ -75,65 +75,40 @@ impl Board {
     }
 
     pub fn get_pieces_to_clear(&self) -> Vec<Piece> {
+        let height = self.height();
+        let width = self.width();
+
         let strategies = vec![
             ClearStrategy::Vertical,
             ClearStrategy::Horizontal,
             ClearStrategy::DiagonalUp,
+            ClearStrategy::DiagonalDown,
         ];
 
         let mut pieces: Vec<Piece> = vec![];
 
         for strategy in strategies {
-            for (mut row, mut col) in strategy.get_starting_points(self.height(), self.width()) {
+            let starting_points = strategy.get_starting_points(height, width);
+
+            for (mut row, mut col) in starting_points {
                 let mut coordinates = vec![];
 
-                loop {
-                    println!("coordinates");
-                    println!("{:?}", (row, col));
-                    coordinates.push((row, col));
+                coordinates.push((row, col));
 
-                    if let Some(point) = strategy.get_next_point(row, col, self.height(), self.width()) {
-                        row = point.0;
-                        col = point.1;
-                    } else {
-                        break;
-                    }
+                while let Some(point) = strategy.get_next_point(
+                    row, col, height, width
+                ) {
+
+                    row = point.0;
+                    col = point.1;
+
+                    coordinates.push((row, col));
                 }
 
                 let new_pieces = self.get_sequential_pieces(coordinates);
                 for s in new_pieces {
                     pieces.push(s);
                 }
-            }
-        }
-
-        // diagonal down by row, looks like \
-        for starting_row in 0..self.height() {
-            let mut coordinates = vec![];
-
-            for (row, col) in (starting_row..self.height()).zip(0..self.width()) {
-                coordinates.push((row, col));
-            }
-
-            let new_pieces = self.get_sequential_pieces(coordinates);
-
-            for s in new_pieces {
-                pieces.push(s);
-            }
-        }
-
-        // diagonal down by col, looks like \
-        for starting_col in 1..self.width() {
-            let mut coordinates = vec![];
-
-            for (row, col) in (0..self.height()).zip((starting_col..self.width())) {
-                coordinates.push((row, col));
-            }
-
-            let new_pieces = self.get_sequential_pieces(coordinates);
-
-            for s in new_pieces {
-                pieces.push(s);
             }
         }
 
