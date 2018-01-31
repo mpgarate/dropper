@@ -7,7 +7,7 @@ pub enum MoveDirection {
     Right
 }
 
-pub enum PieceGenerator{
+pub enum PieceGenerator {
     Random(usize),
     Exact(Vec<Piece>),
 }
@@ -112,7 +112,9 @@ impl Game {
             _ => col,
         };
 
-        self.current_piece.col = new_col;
+        if let None = self.board.get(self.current_piece.row(), new_col) {
+            self.current_piece.col = new_col;
+        }
     }
 
     pub fn step(&mut self) {
@@ -128,6 +130,14 @@ impl Game {
                 row: new_row,
                 col: self.current_piece.col(),
                 color: self.current_piece.color(),
+            };
+
+            let first_free_row = self.board.get_lowest_free_row_in_col(
+                self.current_piece.col()
+            );
+
+            if new_row == first_free_row {
+                self.drop_piece();
             }
         } else {
             self.drop_piece();

@@ -6,6 +6,7 @@ pub enum Color {
     Yellow,
     Blue,
     Green,
+    Black,
 }
 
 impl Color {
@@ -17,6 +18,7 @@ impl Color {
             Color::Yellow,
             Color::Blue,
             Color::Green,
+            Color::Black,
         ]).unwrap().clone()
     }
 
@@ -26,6 +28,7 @@ impl Color {
             Color::Yellow => [1.0, 1.0, 0.5, 1.0],
             Color::Blue => [0.0, 0.5, 1.0, 1.0],
             Color::Green => [0.0, 0.5, 0.0, 1.0],
+            Color::Black => [0.0, 0.0, 0.0, 1.0],
         }
     }
 }

@@ -11,15 +11,15 @@ use dropper::game::MoveDirection;
 use std::time::{Duration};
 
 const GAME_WIDTH: usize = 4;
-const GAME_HEIGHT: usize = 16;
+const GAME_HEIGHT: usize = 20;
 
-const BLOCK_WIDTH: u32 = 128;
-const BLOCK_HEIGHT: u32 = 32;
+const BLOCK_WIDTH: u32 = 128 + 32;
+const BLOCK_HEIGHT: u32 = 32 + 8;
 
 const WINDOW_WIDTH: u32 = BLOCK_WIDTH * GAME_WIDTH as u32;
 const WINDOW_HEIGHT: u32 = BLOCK_HEIGHT * GAME_HEIGHT as u32;
 
-const FRAME_DURATION: u64 = 75; 
+const FRAME_DURATION: u64 = 65;
 
 fn main() {
     let mut window: PistonWindow = WindowSettings::new(
@@ -69,6 +69,10 @@ fn main() {
 
         if let Some(Button::Keyboard(Key::Right)) = e.press_args() {
             game.move_piece(MoveDirection::Right);
+        }
+
+        if let Some(Button::Keyboard(Key::Space)) = e.press_args() {
+            game.drop_piece();
         }
     }
 }

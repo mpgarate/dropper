@@ -82,12 +82,12 @@ impl Board {
             .flat_map(|s| s)
             .collect();
 
-            sequence_coordinates.sort();
-            sequence_coordinates.dedup();
+        sequence_coordinates.sort();
+        sequence_coordinates.dedup();
 
-            sequence_coordinates.iter().map(|&&(row, col)| {
-                Piece { row: row, col: col, color: self.get(row, col).unwrap() }
-            }).collect()
+        sequence_coordinates.iter().map(|&&(row, col)| {
+            Piece { row: row, col: col, color: self.get(row, col).unwrap() }
+        }).collect()
     }
 
     pub fn get_pieces_to_clear(&self) -> Vec<Piece> {
