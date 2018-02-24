@@ -133,7 +133,7 @@ impl Board {
 
     pub fn clear_all(&mut self, pieces: Vec<Piece>) {
         for piece in pieces {
-            self.unset(piece.row(), piece.col());
+            self.unset(piece.row, piece.col);
         }
 
         for col in 0..self.width() {

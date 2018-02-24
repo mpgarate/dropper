@@ -51,8 +51,8 @@ fn main() {
 
                 Rectangle::new(piece.color_rgba()).draw(
                     [
-                        (piece.col() as u32 * BLOCK_WIDTH) as f64,
-                        (piece.row() as u32 * BLOCK_HEIGHT) as f64,
+                        (piece.col as u32 * BLOCK_WIDTH) as f64,
+                        (piece.row as u32 * BLOCK_HEIGHT) as f64,
                         BLOCK_WIDTH as f64,
                         BLOCK_HEIGHT as f64,
                     ],

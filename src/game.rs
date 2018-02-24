@@ -37,14 +37,6 @@ pub struct Piece {
 }
 
 impl Piece {
-    pub fn row(&self) -> usize {
-        self.row
-    }
-
-    pub fn col(&self) -> usize {
-        self.col
-    }
-
     pub fn color(&self) -> Color {
         self.color.clone()
     }
@@ -82,7 +74,7 @@ impl Game {
     }
 
     pub fn drop_piece(&mut self) {
-        let col = self.current_piece.col();
+        let col = self.current_piece.col;
         let color = self.current_piece.color();
 
         let first_free_row = self.board.get_lowest_free_row_in_col(col);
@@ -104,7 +96,7 @@ impl Game {
     }
 
     pub fn move_piece(&mut self, direction: MoveDirection) {
-        let col = self.current_piece.col();
+        let col = self.current_piece.col;
 
         let new_col = match direction {
             MoveDirection::Left if col > 0 => col - 1,
@@ -112,28 +104,28 @@ impl Game {
             _ => col,
         };
 
-        if let None = self.board.get(self.current_piece.row(), new_col) {
+        if let None = self.board.get(self.current_piece.row, new_col) {
             self.current_piece.col = new_col;
         }
     }
 
     pub fn step(&mut self) {
-        let row = self.current_piece.row();
+        let row = self.current_piece.row;
         let new_row = row + 1;
 
         let is_valid_row = new_row < self.height;
-        let is_piece_below = self.board.get(new_row.clone(), self.current_piece.col())
+        let is_piece_below = self.board.get(new_row.clone(), self.current_piece.col)
             .is_some();
 
         if is_valid_row && !is_piece_below {
             self.current_piece = Piece {
                 row: new_row,
-                col: self.current_piece.col(),
+                col: self.current_piece.col,
                 color: self.current_piece.color(),
             };
 
             let first_free_row = self.board.get_lowest_free_row_in_col(
-                self.current_piece.col()
+                self.current_piece.col
             );
 
             if new_row == first_free_row {
