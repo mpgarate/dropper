@@ -24,11 +24,11 @@ impl Color {
 
     pub fn as_rgba(&self) -> [f32; 4] {
         match *self {
-            Color::Red => [0.8, 0.0, 0.0, 1.0],
-            Color::Yellow => [1.0, 1.0, 0.5, 1.0],
-            Color::Blue => [0.0, 0.5, 1.0, 1.0],
-            Color::Green => [0.0, 0.5, 0.0, 1.0],
-            Color::Black => [0.0, 0.0, 0.0, 1.0],
+            Color::Red => [0.6, 0.2, 0.2, 1.0],
+            Color::Yellow => [0.7, 0.7, 0.25, 1.0],
+            Color::Blue => [0.2, 0.4, 0.6, 1.0],
+            Color::Green => [0.2, 0.6, 0.2, 1.0],
+            Color::Black => [0.1, 0.1, 0.1, 1.0],
         }
     }
 }
