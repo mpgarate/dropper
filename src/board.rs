@@ -31,7 +31,7 @@ impl Board {
     }
 
     fn remove_and_shift_column(&mut self, starting_row: usize, col: usize) {
-        for row in (0...starting_row).rev() {
+        for row in (0..(starting_row + 1)).rev() {
             let piece_above = if row > 0 {
                 self.get(row - 1, col)
             } else {
