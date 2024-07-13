@@ -97,8 +97,8 @@ impl Board {
         sequence_coordinates
             .iter()
             .map(|&&(row, col)| Piece {
-                row: row,
-                col: col,
+                row,
+                col,
                 color: self.get(row, col).unwrap(),
             })
             .collect()
