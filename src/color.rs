@@ -1,4 +1,5 @@
-use rand::{thread_rng, Rng};
+use rand::seq::SliceRandom;
+use rand::thread_rng;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Color {
@@ -11,15 +12,15 @@ pub enum Color {
 
 impl Color {
     pub fn rand() -> Color {
-        let mut rng = thread_rng();
-
-        rng.choose(&[
+        let items = [
             Color::Red,
             Color::Yellow,
             Color::Blue,
             Color::Green,
             Color::Black,
-        ]).unwrap().clone()
+        ];
+
+        items.choose(&mut thread_rng()).unwrap().clone()
     }
 
     pub fn as_rgba(&self) -> [f32; 4] {
@@ -32,4 +33,3 @@ impl Color {
         }
     }
 }
-

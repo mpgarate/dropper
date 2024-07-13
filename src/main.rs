@@ -1,14 +1,14 @@
 extern crate dropper;
-extern crate piston_window;
 extern crate find_folder;
+extern crate piston_window;
 
-use piston_window::*;
 use dropper::frame_timer::FrameTimer;
 use dropper::game::Game;
-use dropper::game::PieceGenerator;
 use dropper::game::MoveDirection;
+use dropper::game::PieceGenerator;
+use piston_window::*;
 
-use std::time::{Duration};
+use std::time::Duration;
 
 const GAME_WIDTH: usize = 4;
 const GAME_HEIGHT: usize = 20;
@@ -19,32 +19,26 @@ const BLOCK_HEIGHT: u32 = 32 + 8;
 const WINDOW_WIDTH: u32 = BLOCK_WIDTH * GAME_WIDTH as u32;
 const WINDOW_HEIGHT: u32 = BLOCK_HEIGHT * GAME_HEIGHT as u32;
 
-const FRAME_DURATION: u64 = 65;
+const FRAME_DURATION: u64 = 120;
 
 fn main() {
-    let mut window: PistonWindow = WindowSettings::new(
-            "dropper",
-            [WINDOW_WIDTH as u32, WINDOW_HEIGHT as u32]
-        )
-        .exit_on_esc(true)
-        .samples(4)
-        .build()
-        .unwrap();
+    let mut window: PistonWindow =
+        WindowSettings::new("dropper", [WINDOW_WIDTH as u32, WINDOW_HEIGHT as u32])
+            .exit_on_esc(true)
+            .samples(4)
+            .build()
+            .unwrap();
 
     let mut frame_timer = FrameTimer::new(Duration::from_millis(FRAME_DURATION));
 
-    let mut game = Game::new(
-        GAME_HEIGHT,
-        GAME_WIDTH,
-        PieceGenerator::Random(GAME_WIDTH),
-    );
+    let mut game = Game::new(GAME_HEIGHT, GAME_WIDTH, PieceGenerator::Random(GAME_WIDTH));
 
     while let Some(e) = window.next() {
         if frame_timer.next_frame() {
             game.step();
         }
 
-        window.draw_2d(&e, |c, g| {
+        window.draw_2d(&e, |c, g, _| {
             for piece in game.get_pieces() {
                 clear([0.8, 0.8, 0.8, 1.0], g);
                 g.clear_stencil(0);
@@ -58,7 +52,7 @@ fn main() {
                     ],
                     &c.draw_state,
                     c.transform,
-                    g
+                    g,
                 );
             }
         });
